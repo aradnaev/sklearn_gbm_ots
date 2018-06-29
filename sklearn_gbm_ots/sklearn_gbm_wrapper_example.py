@@ -11,7 +11,7 @@ Author: Alex Radnaev
 
 
 import sklearn.datasets as sklearn_ds
-import sklearn_gbm_wrapper
+import sklearn_gbm_ots.sklearn_gbm_wrapper as sklearn_gbm_wrapper
 import pandas as pd
 
 

@@ -8,7 +8,7 @@ author: Alex Radnaev
 date created: 2018-06-15
 """
 
-import sklearn_gbm_extend
+import sklearn_gbm_ots.sklearn_gbm_extend as sklearn_gbm_extend
 import pandas as pd
 import sklearn.model_selection as skl_ms
 import sklearn.ensemble as skl_e
