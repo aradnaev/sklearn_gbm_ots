@@ -58,11 +58,11 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
     def cv_estimate(
             self,
             params,
-            n_splits = 3):
-        cv = skl_ms.KFold(n_splits = n_splits)
+            n_splits=3):
+        cv = skl_ms.KFold(n_splits=n_splits)
         val_scores = np.zeros(
             (params['n_estimators'], n_splits),
-            dtype = np.float64)
+            dtype=np.float64)
         i = 0
         for train, test in cv.split(self.train_X, self.train_y):
             # logging.debug('train indecies: {}'.format(train))
@@ -75,14 +75,14 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             cv_model = skl_e.GradientBoostingRegressor(**params)
             cv_model.fit(
                 train_X_cv_subset, train_y_cv_subset,
-                sample_weight = train_weights_cv_subset)
+                sample_weight=train_weights_cv_subset)
 
             logging.info('fitted cv model #{}/{}'.format(i + 1, n_splits))
             val_scores[:, i] += self.test_score_vs_stage(
                 cv_model, self.train_X.iloc[test], self.train_y.iloc[test])
             i += 1
-        mean_val_scores = np.mean(val_scores, axis = 1)
-        std_val_scores = np.std(val_scores, axis = 1)
+        mean_val_scores = np.mean(val_scores, axis=1)
+        std_val_scores = np.std(val_scores, axis=1)
 
         return mean_val_scores, std_val_scores
 
@@ -103,7 +103,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         return cv_n_trees, cv1se_n_trees
 
     def test_score_vs_stage(self, model, test_X, test_y):
-        score = np.zeros((model.n_estimators,), dtype = np.float64)
+        score = np.zeros((model.n_estimators,), dtype=np.float64)
         for i, y_pred in enumerate(model.staged_predict(test_X)):
             score[i] = model.loss_(test_y, y_pred)
         return score
@@ -120,7 +120,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
         if fig_params is None:
             fig_params = {}
-        test_score = np.zeros(gbm.n_estimators, dtype = np.float64)
+        test_score = np.zeros(gbm.n_estimators, dtype=np.float64)
         for i, y_pred in enumerate(gbm.staged_predict(test_X)):
             test_score[i] = gbm.loss_(test_y, y_pred)
 
@@ -131,34 +131,34 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         if cv_scores is not None:
             plt.plot(plot_x,
                      cv_scores,
-                     label = 'CV score')
+                     label='CV score')
             if cv_std_scores is not None:
                 # plt.errorbar(plot_x, cv_scores, yerr=cv_std_scores, fmt='o')
                 plt.fill_between(
                     plot_x,
                     cv_scores - cv_std_scores,
                     cv_scores + cv_std_scores,
-                    alpha = 0.2)
+                    alpha=0.2)
 
         plt.plot(plot_x,
                  gbm.train_score_,
-                 label = 'Training set score')
+                 label='Training set score')
         plt.plot(plot_x,
                  test_score,
-                 label = 'Test set score')
+                 label='Test set score')
 
-        plt.legend(loc = 'upper right')
+        plt.legend(loc='upper right')
         plt.xlabel('Number of trees')
         plt.ylabel('scores')
         ylim = plt.gca().get_ylim()
         if vertical_lines is not None:
             i = 0
             for name, n_tree in vertical_lines.items():
-                plt.axvline(x = n_tree)
+                plt.axvline(x=n_tree)
                 plt.annotate(
-                    s = ' {} {}'.format(name, n_tree),
-                    xy = (n_tree,
-                          ylim[1] - (ylim[1] - ylim[0]) * 0.05 * (i + 1)))
+                    s=' {} {}'.format(name, n_tree),
+                    xy=(n_tree,
+                        ylim[1] - (ylim[1] - ylim[0]) * 0.05 * (i + 1)))
                 i += 1
         self.save_fig(fig, 'gbm_training_curves.png')
 
@@ -196,7 +196,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         self.consolidated_feature_importance = feature_importance
         return feature_importance
 
-    def feature_importances_plot(self, gbm, fig_params = None):
+    def feature_importances_plot(self, gbm, fig_params=None):
         if fig_params is None:
             fig_params = {}
         fis = gbm.feature_importances_
@@ -204,11 +204,11 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
         feature_labels2, fis2 = mu.dict_to_lists(
             self.consolidate_feature_importance(fis),
-            target_type = np.array)
+            target_type=np.array)
         ordered_ids = np.argsort(fis2)
         plot_x = np.arange(ordered_ids.shape[0]) + 0.5
         fig = plt.figure(**fig_params)
-        plt.barh(plot_x, fis2[ordered_ids], align = 'center')
+        plt.barh(plot_x, fis2[ordered_ids], align='center')
         plt.yticks(plot_x, feature_labels2[ordered_ids])
         plt.xlabel('Relative importance')
         plt.ylabel('Feature')
@@ -222,7 +222,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         if np.sum(self.train_weights == 1) != len(self.train_weights):
             logging.warning('box plots do not take into account weights')
         bp = plt.boxplot(
-            np.array(raw_data), positions = plot_x, manage_xticks = False)
+            np.array(raw_data), positions=plot_x, manage_xticks=False)
         for k in bp.keys():
             [b.set_alpha(0.05) for b in bp[k]]
 
@@ -230,9 +230,9 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             self,
             gbm,
             feature_label,
-            ax_limits_per_feature = None,
-            overlay_box_plots = False,
-            add_means = True,
+            ax_limits_per_feature=None,
+            overlay_box_plots=False,
+            add_means=True,
             **fig_params):
         """Plots partial dependency for a categorical variable.
 
@@ -254,12 +254,12 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         outcome_mean = np.mean(self.train_y)
         for feature_index in self.categorical_features_ind[feature_label]:
             y, x = skl_e_pd.partial_dependence(
-                gbm, [feature_index], X = self.train_X)
+                gbm, [feature_index], X=self.train_X)
 
             stds = self.partial_dependency_uncertainty(
                 [feature_index],
-                grid = x[0],
-                percentiles = (0.0, 1.0))
+                grid=x[0],
+                percentiles=(0.0, 1.0))
             deltas.append(y[0][np.where(x[0] == 1)[0][0]]
                           - y[0][np.where(x[0] == 0)[0][0]])
             labels.append(self.feature_labels[feature_index].replace(
@@ -271,14 +271,14 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             raw_data_weights = self.train_weights[train_X_idx]
             raw_data.append(raw_data_subset)
             means.append(
-                np.average(raw_data_subset, weights = raw_data_weights))
+                np.average(raw_data_subset, weights=raw_data_weights))
             means_unc.append(self.mean_uncertainty(
                 raw_data_subset,
-                weights = raw_data_weights))
+                weights=raw_data_weights))
             counts.append(int(np.sum(raw_data_weights)))
             raw_stds.append(
                 pde.std(raw_data_subset,
-                        weights = raw_data_weights))
+                        weights=raw_data_weights))
         idxs = np.argsort(deltas)
         plot_x = np.arange(idxs.shape[0]) + 0.5
         plot_deltas = np.array(deltas)[idxs]
@@ -286,25 +286,25 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         ax = fig.add_subplot(1, 1, 1)
         ax.bar(
             plot_x, plot_deltas,
-            width = width, align = 'center')
+            width=width, align='center')
         ax.errorbar(
             plot_x, plot_deltas,
-            yerr = np.array(deltas_unc)[idxs],
-            color = 'grey',
+            yerr=np.array(deltas_unc)[idxs],
+            color='grey',
             fmt='o')
 
         if add_means:
             means_y = np.array(means)[idxs]
             ax.bar(
                 plot_x + width, means_y,
-                width = width, align = 'center',
-                alpha = 0.5)
+                width=width, align='center',
+                alpha=0.5)
             ax.errorbar(
                 plot_x + width, means_y,
-                yerr = np.array(means_unc)[idxs],
-                color = 'grey',
+                yerr=np.array(means_unc)[idxs],
+                color='grey',
                 fmt='o')
-        ax.grid(alpha = 0.3)
+        ax.grid(alpha=0.3)
 
         if overlay_box_plots:
             self.box_plots_raw_data(raw_data, plot_x)
@@ -335,7 +335,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             [labels, deltas, deltas_unc,
              means, means_unc,
              counts, raw_stds],
-            index = [
+            index=[
                 feature_label,
                 'partial dependence delta',
                 'partial dependence delta uncertainty',
@@ -343,7 +343,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                 'mean uncertainty',
                 'sample size',
                 'standard deviation']).T.sort_values(
-                    by = 'partial dependence delta')
+                    by='partial dependence delta')
         df.to_excel(
             self.destination_dir
             + 'partial_dependence_with_stats_{}.xlsx'.format(
@@ -359,11 +359,11 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         if weights is None:
             return np.std(data) / np.sqrt(len(data))
         else:
-            return pde.std(data, weights = weights) / np.sqrt(np.sum(weights))
+            return pde.std(data, weights=weights) / np.sqrt(np.sum(weights))
 
     def add_overlay_data(
             self, ax, raw_x, n_raw_datapoints, outcome_mean,
-            overlay_box_plots = False):
+            overlay_box_plots=False):
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
         locs = np.linspace(xlim[0], xlim[1], n_raw_datapoints)
@@ -385,17 +385,17 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                 raw_data_weights = self.train_weights[idx]
                 raw_data.append(raw_y_bucket)
                 means.append(
-                    np.average(raw_y_bucket, weights = raw_data_weights))
+                    np.average(raw_y_bucket, weights=raw_data_weights))
                 means_unc.append(
                     self.mean_uncertainty(
                         raw_y_bucket,
-                        weights = raw_data_weights))
+                        weights=raw_data_weights))
                 counts.append(int(np.sum(raw_data_weights)))
         plot_mean_x = np.array(means_x)
         plot_mean_y = np.array(means)
-        ax.plot(plot_mean_x, plot_mean_y, alpha = 0.1)
+        ax.plot(plot_mean_x, plot_mean_y, alpha=0.1)
         ax.errorbar(
-            plot_mean_x, plot_mean_y, yerr = np.array(means_unc), fmt='o')
+            plot_mean_x, plot_mean_y, yerr=np.array(means_unc), fmt='o')
         # box plots
         if overlay_box_plots:
             self.box_plots_raw_data(raw_data, means_x)
@@ -411,12 +411,12 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         c_max = np.argmax(counts_array)
         bar_width = 0.9 * (xlim[1] - xlim[0]) / (len(means_x) + 1)
         ax.bar(means_x, counts_array,
-               alpha = 0.5, bottom = ylim[0],
-               width = bar_width)
+               alpha=0.5, bottom=ylim[0],
+               width=bar_width)
         ax.annotate(
-            s = str(max_counts),
-            xy = (means_x[c_max], ylim[0] + counts_array[c_max]),
-            color = 'green')
+            s=str(max_counts),
+            xy=(means_x[c_max], ylim[0] + counts_array[c_max]),
+            color='green')
 
     def models_sample(
             self, params):
@@ -428,7 +428,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             cv_model.fit(
                 train_X_cv_subset,
                 self.train_y_cv_subsets[i],
-                sample_weight = self.train_weights_cv_subsets[i])
+                sample_weight=self.train_weights_cv_subsets[i])
 
             self.models.append(cv_model)
 
@@ -437,35 +437,35 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
         pdps_cv = np.zeros(
             (len(grid), len(self.models)),
-            dtype = np.float64)
+            dtype=np.float64)
         # logging.debug('grid: {}; shape: {}'.format(grid, grid.shape))
         for i, cv_model in enumerate(self.models):
             pdps = skl_e_pd.partial_dependence(
                 cv_model, features, grid,
-                percentiles = percentiles)
+                percentiles=percentiles)
             pdps_cv[:, i] = pdps[0]
 
-        stds = np.std(pdps_cv, axis = 1)
+        stds = np.std(pdps_cv, axis=1)
         return stds
 
     def plot_partial_dependence_with_unc(
-            self, gbm, feature_idx, percentiles = (0.05, 0.95)):
+            self, gbm, feature_idx, percentiles=(0.05, 0.95)):
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
 
         pdps, axes = skl_e_pd.partial_dependence(
-            gbm, [feature_idx], X = self.train_X,
-            percentiles = percentiles)
+            gbm, [feature_idx], X=self.train_X,
+            percentiles=percentiles)
 
         stds = self.partial_dependency_uncertainty(
             [feature_idx],
-            grid = axes[0],
-            percentiles = percentiles)
+            grid=axes[0],
+            percentiles=percentiles)
 
         plt.fill_between(
-            axes[0], pdps[0] - stds, pdps[0] + stds, alpha = 0.2)
+            axes[0], pdps[0] - stds, pdps[0] + stds, alpha=0.2)
         plt.plot(
-            axes[0], pdps[0], lw = 5)
+            axes[0], pdps[0], lw=5)
 
         return fig, ax
 
@@ -473,10 +473,10 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             self,
             gbm,
             gbm_params,
-            n_raw_datapoints = 10,
-            ax_limits = None,
-            percentiles = (0.05, 0.95),
-            overlay_box_plots = False,
+            n_raw_datapoints=10,
+            ax_limits=None,
+            percentiles=(0.05, 0.95),
+            overlay_box_plots=False,
             **fig_params):
         """Plots partial dependencies overlayed with other data.
 
@@ -498,13 +498,13 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             if feature_label in self.categorical_labels:
                 self.partial_dependency_catagorical_plot(
                     gbm, feature_label,
-                    ax_limits_per_feature = ax_limits_per_feature,
-                    overlay_box_plots = overlay_box_plots,
+                    ax_limits_per_feature=ax_limits_per_feature,
+                    overlay_box_plots=overlay_box_plots,
                     **fig_params)
             else:
                 feature_idx = self.feature_index_by_label[feature_label]
                 fig, ax = self.plot_partial_dependence_with_unc(
-                    gbm, feature_idx, percentiles = percentiles)
+                    gbm, feature_idx, percentiles=percentiles)
 
                 ylim = ax_limits_per_feature.get(
                     'ylim', self.add_plot_margins(ax.get_ylim()))
@@ -512,7 +512,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                     'xlim', self.add_plot_margins(ax.get_xlim()))
                 ax.set_xlim(xlim)
                 ax.set_ylim(ylim)
-                ax.grid(alpha = 0.3)
+                ax.grid(alpha=0.3)
 
                 raw_feature = self.train_X[[self.feature_labels[feature_idx]]]
                 raw_outcome = self.train_y - outcome_mean
@@ -521,7 +521,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                     raw_feature.iloc[:, 0],
                     n_raw_datapoints,
                     outcome_mean)
-                ax.scatter(raw_feature, raw_outcome, alpha = 0.05)
+                ax.scatter(raw_feature, raw_outcome, alpha=0.05)
                 # locs = axs[0].get_xticks()
                 ax.set_xlim(xlim)
                 ax.set_ylim(ylim)
@@ -538,7 +538,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         if f1 is not None and f2 is not None:
             fig, axs = skl_e_pd.plot_partial_dependence(
                 gbm, self.train_X, [[f1, f2]],
-                feature_names = self.train_X.columns,
+                feature_names=self.train_X.columns,
                 **fig_params)
             self.save_fig(fig, 'partial_dependence_{}_{}.png'.format(
                 first_feature,

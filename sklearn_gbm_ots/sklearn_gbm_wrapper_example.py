@@ -11,7 +11,7 @@ Author: Alex Radnaev
 
 
 import sklearn.datasets as sklearn_ds
-import sklearn_gbm_ots.sklearn_gbm_wrapper as sklearn_gbm_wrapper
+import sklearn_gbm_ots as gbm_ots
 import pandas as pd
 
 
@@ -33,9 +33,9 @@ def prepare_california_housing_dataframe(outcome):
     X = housing_dataset.data
     y = housing_dataset.target
 
-    df_X = pd.DataFrame(X, columns = housing_dataset.feature_names)
-    df_y = pd.DataFrame(y, columns = [outcome])
-    df = pd.concat([df_X, df_y], axis = 1)
+    df_X = pd.DataFrame(X, columns=housing_dataset.feature_names)
+    df_y = pd.DataFrame(y, columns=[outcome])
+    df = pd.concat([df_X, df_y], axis=1)
     df['Population'] = df['Population'].apply(population_mapper)
 
     return df
@@ -48,7 +48,7 @@ def run_gbm():
         fitted sklearn_gbm_wrapper.GBMwrapper object"""
     outcome = 'house price, 100k'
     df = prepare_california_housing_dataframe(outcome)
-    housing_gbm = sklearn_gbm_wrapper.GBMwrapper(
+    housing_gbm = gbm_ots.GBMwrapper(
         df,
         outcome)
 
@@ -61,15 +61,15 @@ def run_gbm():
         'learning_rate': 0.3,
         'loss': 'ls'}
 
-    housing_gbm.build_model(params = gbm_params)
+    housing_gbm.build_model(params=gbm_params)
     return housing_gbm
 
 
 def custom_plotting(gbm):
     """Demonstrates how to customize plots"""
     gbm.plot_output(
-        ax_limits = {'AveBedrms': {'xlim': [0.9, 1.2]}},
-        figsize = (11, 11))
+        ax_limits={'AveBedrms': {'xlim': [0.9, 1.2]}},
+        figsize=(11, 11))
 
 
 def main():

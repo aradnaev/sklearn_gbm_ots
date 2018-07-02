@@ -24,12 +24,12 @@ class GBMwrapper():
             self,
             df_dataset,
             outcome,
-            weights_col_name = None,
-            features_list = None,
-            impute_NAs = True,
-            tail_threshold = 10,
-            destination_dir = './gbm_output/',
-            ax_limits_per_feature = None):
+            weights_col_name=None,
+            features_list=None,
+            impute_NAs=True,
+            tail_threshold=10,
+            destination_dir='./gbm_output/',
+            ax_limits_per_feature=None):
 
         """Creates gbm object for future modeling.
 
@@ -65,7 +65,7 @@ class GBMwrapper():
         if weights_col_name is not None:
             self.weights = self.df_dataset[weights_col_name]
             self.df_dataset = self.df_dataset.drop(
-                [weights_col_name], axis = 1)
+                [weights_col_name], axis=1)
         else:
             self.weights = pd.Series(np.ones(self.df_dataset.shape[0]))
         self.ax_limits_per_feature = ax_limits_per_feature
@@ -146,7 +146,7 @@ class GBMwrapper():
         """ Prepares data for model training:
             one-hot encoding for categorical values
             setting aside test dataset """
-        self.X = pd.get_dummies(self.df_dataset.drop([self.outcome], axis = 1))
+        self.X = pd.get_dummies(self.df_dataset.drop([self.outcome], axis=1))
 
         self.y = self.df_dataset[self.outcome]
         (self.train_X, self.test_X, self.train_y, self.test_y,
@@ -159,10 +159,10 @@ class GBMwrapper():
             self.train_X,
             self.train_y,
             self.train_weights,
-            outcome_label = self.outcome,
-            destination_dir = self.destination_dir)
+            outcome_label=self.outcome,
+            destination_dir=self.destination_dir)
 
-    def build_model(self, params = None, cv_n_splits = 5):
+    def build_model(self, params=None, cv_n_splits=5):
         """Builds model and stores it in the object:
             tunes number of estimators (trees) with cross validation
             evaluate performance
@@ -176,7 +176,7 @@ class GBMwrapper():
         self.params = params
         logging.info('Cross-validation parameter optimization started.')
         val_scores, std_val_scores = self.gbm_tools.cv_estimate(
-            params, n_splits = cv_n_splits)
+            params, n_splits=cv_n_splits)
         cv_n_trees, cv1se_n_trees = self.gbm_tools.cv_n_tree(
             val_scores, std_val_scores)
         vertical_lines = {}
@@ -199,7 +199,7 @@ class GBMwrapper():
         self.gbm_fit()
 
         self.gbm_tools.plot_gbm_training(
-            self.gbm, self.test_X, self.test_y, cv_scores = val_scores,
+            self.gbm, self.test_X, self.test_y, cv_scores=val_scores,
             cv_std_scores = std_val_scores,
             fig_params = {'figsize': (11, 11)},
             vertical_lines = vertical_lines)
@@ -231,7 +231,7 @@ class GBMwrapper():
         self.gbm_fit()
         self.evaluate_performance(self.gbm)
 
-    def plot_output(self, ax_limits = None, **fig_params):
+    def plot_output(self, ax_limits=None, **fig_params):
         """plots feature importance and partial dependencies plots
         arguments:
             ax_limits - dictionary for customizing plots axes:
@@ -250,7 +250,7 @@ class GBMwrapper():
         self.gbm_tools.partial_dependencies_plots(
             self.gbm,
             self.params,
-            ax_limits = ax_limits,
+            ax_limits=ax_limits,
             **fig_params)
 
     def evaluate_performance(self, gbm):
@@ -259,9 +259,9 @@ class GBMwrapper():
         pred_test_y = gbm.predict(self.test_X)
         mse = skl_metrics.mean_squared_error(
             self.test_y, pred_test_y,
-            sample_weight = 1 / self.test_weights)
+            sample_weight=1 / self.test_weights)
         vexp = skl_metrics.explained_variance_score(
-            self.test_y, pred_test_y, sample_weight = 1 / self.test_weights)
+            self.test_y, pred_test_y, sample_weight=1 / self.test_weights)
         print('rmse: {:.2f}, variance explained: {:.0f}%'.format(
             np.sqrt(mse), vexp * 100.))
         predicted_label = 'predicted_{}'.format(self.outcome)
