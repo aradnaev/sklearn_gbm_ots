@@ -23,19 +23,18 @@ pip install sklearn
 
 ### Installing
 
-
+cd to the repo root directory and run:
 ```
-pip install sklearn_gbm_ots
+pip install -e .
 ```
 
 Try running an example:
 
 ```
-import sklearn_gbm_ots
-sklearn_gbm_ots.sklearn_gbm_wrapper_example.run_gbm()
-
+import sklearn_gbm_ots.sklearn_gbm_wrapper_example as example
+example.run_gbm()
 ```
-
+you should observe log of building a model using cross-validation for tuning number of ensembles (trees) and resulting plots (displayed and saved to gbm_output sub-folder)
 
 ## Running the tests
 
