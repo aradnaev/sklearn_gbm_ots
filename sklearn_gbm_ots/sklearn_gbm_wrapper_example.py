@@ -48,9 +48,11 @@ def run_gbm():
         fitted sklearn_gbm_wrapper.GBMwrapper object"""
     outcome = 'house price, 100k'
     df = prepare_california_housing_dataframe(outcome)
+    # df = df[:100]
     housing_gbm = gbm_ots.GBMwrapper(
         df,
-        outcome)
+        outcome,
+        show_plots=False)
 
     gbm_params = {
         'n_estimators': 1000,

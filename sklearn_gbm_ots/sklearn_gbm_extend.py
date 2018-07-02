@@ -23,8 +23,12 @@ class ToolsGBM():
             train_X,
             train_y,
             train_weights,
-            outcome_label = 'outcome',
-            destination_dir = None):
+            outcome_label='outcome',
+            destination_dir=None,
+            show_plots=True):
+        self.show_plots = show_plots
+        if not self.show_plots:
+            plt.ioff()
         self.destination_dir = destination_dir
         self.feature_labels = train_X.columns
         self.categorical_labels = categorical_labels
@@ -214,7 +218,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         plt.ylabel('Feature')
         plt.title('Feature importance ({} trees)'.format(
             gbm.n_estimators))
-        plt.show()
+        if self.show_plots:
+            plt.show()
         self.save_fig(fig, 'feature_importance_{}_trees.png'.format(
             gbm.n_estimators))
 
@@ -238,6 +243,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
         Todo: split this methods into 2-3 smaller ones
         """
+        legends = []
         deltas = []
         deltas_unc = []
         labels = []
@@ -284,9 +290,11 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         plot_deltas = np.array(deltas)[idxs]
         fig = plt.figure(**fig_params)
         ax = fig.add_subplot(1, 1, 1)
-        ax.bar(
+        pdp_bars = ax.bar(
             plot_x, plot_deltas,
             width=width, align='center')
+        legends.append(pdp_bars)
+        # ax.legend(['partial dependence delta'])
         ax.errorbar(
             plot_x, plot_deltas,
             yerr=np.array(deltas_unc)[idxs],
@@ -295,7 +303,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
         if add_means:
             means_y = np.array(means)[idxs]
-            ax.bar(
+            means_bars = ax.bar(
                 plot_x + width, means_y,
                 width=width, align='center',
                 alpha=0.5)
@@ -304,6 +312,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                 yerr=np.array(means_unc)[idxs],
                 color='grey',
                 fmt='o')
+            legends.append(means_bars)
+            # ax.legend(['mean with uncertainty'])
         ax.grid(alpha=0.3)
 
         if overlay_box_plots:
@@ -313,8 +323,10 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
 
-        self.overlay_counts_histogram(ax, plot_x, counts, xlim, ylim)
-
+        counts_bars = self.overlay_counts_histogram(
+            ax, plot_x, counts, xlim, ylim)
+        # ax.legend(label='counts')
+        legends.append(counts_bars)
         plt.xticks(plot_x, np.array(labels)[idxs], rotation='vertical')
         plt.xlabel('{}'.format(feature_label))
         plt.ylabel(self.outcome_label)
@@ -326,8 +338,13 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         xlim = ax_limits_per_feature.get('xlim')
         if xlim is not None:
             ax.set_ylim(tuple(xlim))
-
-        plt.show()
+        # plt.legend(
+        #     handles=legends,
+        #     loc='center left',
+        #     bbox_to_anchor=(1, 0.5))
+        if self.show_plots:
+            plt.show()
+        # plt.show()
         self.save_fig(fig, 'partial_dependence_{}.png'.format(
             feature_label))
 
@@ -410,13 +427,15 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         counts_array = histogram_height * counts_array / max_counts
         c_max = np.argmax(counts_array)
         bar_width = 0.9 * (xlim[1] - xlim[0]) / (len(means_x) + 1)
-        ax.bar(means_x, counts_array,
-               alpha=0.5, bottom=ylim[0],
-               width=bar_width)
+        counts_bars = ax.bar(
+            means_x, counts_array,
+            alpha=0.5, bottom=ylim[0],
+            width=bar_width)
         ax.annotate(
             s=str(max_counts),
             xy=(means_x[c_max], ylim[0] + counts_array[c_max]),
             color='green')
+        return counts_bars
 
     def models_sample(
             self, params):

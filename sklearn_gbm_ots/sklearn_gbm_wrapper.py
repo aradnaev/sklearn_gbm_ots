@@ -29,7 +29,8 @@ class GBMwrapper():
             impute_NAs=True,
             tail_threshold=10,
             destination_dir='./gbm_output/',
-            ax_limits_per_feature=None):
+            ax_limits_per_feature=None,
+            show_plots=True):
 
         """Creates gbm object for future modeling.
 
@@ -50,7 +51,7 @@ class GBMwrapper():
                     'feature_name5': {'xlim': [-1, 1]},
                 }
         """
-
+        self.show_plots = show_plots
         self.destination_dir = destination_dir
         fs.prepare_folder_for(self.destination_dir + 'temp.txt')
         self.df_dataset = df_dataset
@@ -160,7 +161,8 @@ class GBMwrapper():
             self.train_y,
             self.train_weights,
             outcome_label=self.outcome,
-            destination_dir=self.destination_dir)
+            destination_dir=self.destination_dir,
+            show_plots=self.show_plots)
 
     def build_model(self, params=None, cv_n_splits=5):
         """Builds model and stores it in the object:
