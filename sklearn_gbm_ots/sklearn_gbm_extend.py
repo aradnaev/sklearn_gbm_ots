@@ -193,7 +193,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         if self.destination_dir is not None:
             fig.savefig(
                 self.destination_dir + local_filename,
-                bbox_inches='tight')
+                bbox_inches='tight',
+                dpi=150)
 
     def get_categorical_indecies(self):
         categorical_indecies = {}
@@ -290,25 +291,33 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                 [feature_index],
                 grid=x[0],
                 percentiles=(0.0, 1.0))
-            deltas.append(y[0][np.where(x[0] == 1)[0][0]]
-                          - y[0][np.where(x[0] == 0)[0][0]])
-            labels.append(self.feature_labels[feature_index].replace(
-                feature_label + '_', ''))
-            deltas_unc.append(np.sqrt(np.sum(stds**2)))
+            if len(x) == 0 or len(y) == 0:
+                logging.debug('no results for feature_index {}'.format(
+                    feature_index))
+            else:
+                try:
+                    deltas.append(y[0][np.where(x[0] == 1)[0][0]]
+                                  - y[0][np.where(x[0] == 0)[0][0]])
+                    labels.append(self.feature_labels[feature_index].replace(
+                        feature_label + '_', ''))
+                    deltas_unc.append(np.sqrt(np.sum(stds**2)))
 
-            train_X_idx = self.train_X[self.feature_labels[feature_index]] == 1
-            raw_data_subset = self.train_y[train_X_idx] - outcome_mean
-            raw_data_weights = self.train_weights[train_X_idx]
-            raw_data.append(raw_data_subset)
-            means.append(
-                np.average(raw_data_subset, weights=raw_data_weights))
-            means_unc.append(self.mean_uncertainty(
-                raw_data_subset,
-                weights=raw_data_weights))
-            counts.append(int(np.sum(raw_data_weights)))
-            raw_stds.append(
-                pde.std(raw_data_subset,
+                    train_X_idx = self.train_X[self.feature_labels[feature_index]] == 1
+                    raw_data_subset = self.train_y[train_X_idx] - outcome_mean
+                    raw_data_weights = self.train_weights[train_X_idx]
+                    raw_data.append(raw_data_subset)
+                    means.append(
+                        np.average(raw_data_subset, weights=raw_data_weights))
+                    means_unc.append(self.mean_uncertainty(
+                        raw_data_subset,
                         weights=raw_data_weights))
+                    counts.append(int(np.sum(raw_data_weights)))
+                    raw_stds.append(
+                        pde.std(raw_data_subset,
+                                weights=raw_data_weights))
+                except Exception as e:
+                    logging.error('Cannot get partial dependence delta for \
+feature index "{}" due to "{}"'.format(feature_index, e))
         idxs = np.argsort(deltas)
         plot_x = np.arange(idxs.shape[0]) + 0.5
         plot_deltas = np.array(deltas)[idxs]
@@ -352,8 +361,9 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
         counts_bars = self.overlay_counts_histogram(
             ax, plot_x, counts, xlim, ylim)
-        legends.append(counts_bars)
-        legend_labels.append('Counts')
+        if counts_bars is not None:
+            legends.append(counts_bars)
+            legend_labels.append('Counts')
         plt.xticks(plot_x, np.array(labels)[idxs], rotation='vertical')
         plt.xlabel('{}'.format(feature_label))
         plt.ylabel(self.outcome_label)
@@ -365,10 +375,16 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         xlim = ax_limits_per_feature.get('xlim')
         if xlim is not None:
             ax.set_ylim(tuple(xlim))
-        ax.legend(
-            handles=legends,
-            labels=legend_labels,
-            bbox_to_anchor=(1, 0.5))
+        logging.debug('creating legend with handles: "{}", labels: "{}"'.format(
+            legends, legend_labels))
+        try:
+            ax.legend(
+                handles=legends,
+                labels=legend_labels,
+                bbox_to_anchor=(1, 0.5))
+        except Exception as e:
+            logging.error('Cannot add legend for feature "{}" due to "{}"'.format(
+                feature_label, e))
         # plt.legend(
         #     handles=legends[:1],
         #     loc='center left',
@@ -471,6 +487,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
     def overlay_counts_histogram(self, ax, means_x, counts, xlim, ylim):
         # counts
+        if len(counts) == 0:
+            return None
         counts_array = np.array(counts)
         max_counts = np.max(counts_array)
         histogram_height = 0.2 * (ylim[1] - ylim[0])
@@ -520,8 +538,9 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         return stds
 
     def plot_partial_dependence_with_unc(
-            self, gbm, feature_idx, percentiles=(0.05, 0.95)):
-        fig = plt.figure()
+            self, gbm, feature_idx, percentiles=(0.05, 0.95),
+            **fig_params):
+        fig = plt.figure(**fig_params)
         ax = fig.add_subplot(1, 1, 1)
 
         pdps, axes = skl_e_pd.partial_dependence(
