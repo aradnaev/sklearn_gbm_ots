@@ -52,6 +52,18 @@ class ToolsGBM():
         self.train_y_cv_subsets = []
         self.train_weights_cv_subsets = []
         self.models = []
+        self.set_colors()
+
+    def set_colors(
+            self,
+            pdp_color='C0',
+            counts_color='C1',
+            means_color='C2',
+            data_color='C3'):
+        self.pdp_color = pdp_color
+        self.counts_color = counts_color
+        self.means_color = means_color
+        self.data_color = data_color
 
     def weights_warning(self):
         if self.train_weights is not None:
@@ -117,10 +129,10 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             gbm,
             test_X,
             test_y,
-            fig_params = None,
-            cv_scores = None,
-            cv_std_scores = None,
-            vertical_lines = None):
+            fig_params=None,
+            cv_scores=None,
+            cv_std_scores=None,
+            vertical_lines=None):
 
         if fig_params is None:
             fig_params = {}
@@ -293,7 +305,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         ax = fig.add_subplot(1, 1, 1)
         pdp_bars = ax.bar(
             plot_x, plot_deltas,
-            width=width, align='center')
+            width=width, align='center',
+            color=self.pdp_color)
         legends.append(pdp_bars)
         legend_labels.append('Partial dependences with uncertainties')
         ax.errorbar(
@@ -307,7 +320,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             means_bars = ax.bar(
                 plot_x + width, means_y,
                 width=width, align='center',
-                alpha=0.5)
+                alpha=0.5,
+                color=self.means_color)
             ax.errorbar(
                 plot_x + width, means_y,
                 yerr=np.array(means_unc)[idxs],
@@ -425,9 +439,12 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                 counts.append(int(np.sum(raw_data_weights)))
         plot_mean_x = np.array(means_x)
         plot_mean_y = np.array(means)
-        ax.plot(plot_mean_x, plot_mean_y, alpha=0.1)
+        ax.plot(
+            plot_mean_x, plot_mean_y, alpha=0.1,
+            color=self.means_color)
         error_bars_plot = ax.errorbar(
-            plot_mean_x, plot_mean_y, yerr=np.array(means_unc), fmt='o')
+            plot_mean_x, plot_mean_y, yerr=np.array(means_unc), fmt='o',
+            color=self.means_color)
         handles.append(error_bars_plot)
         labels.append('Raw averages with mean uncertainties')
         # box plots
@@ -452,7 +469,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         counts_bars = ax.bar(
             means_x, counts_array,
             alpha=0.5, bottom=ylim[0],
-            width=bar_width)
+            width=bar_width,
+            color=self.counts_color)
         ax.annotate(
             s=str(max_counts),
             xy=(means_x[c_max], ylim[0] + counts_array[c_max]),
@@ -504,9 +522,12 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             percentiles=percentiles)
 
         pdp_uncertainty_plot = plt.fill_between(
-            axes[0], pdps[0] - stds, pdps[0] + stds, alpha=0.2)
+            axes[0], pdps[0] - stds, pdps[0] + stds,
+            alpha=0.2,
+            color=self.pdp_color)
         pdp_plot, = plt.plot(
-            axes[0], pdps[0], lw=5)
+            axes[0], pdps[0], lw=5,
+            color=self.pdp_color)
 
         return fig, ax, pdp_plot, pdp_uncertainty_plot
 
@@ -540,7 +561,9 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             outcome_mean)
         handles = handles + overlay_handles
         labels = labels + overlay_labels
-        scatter_plot = ax.scatter(raw_feature, raw_outcome, alpha=0.05)
+        scatter_plot = ax.scatter(
+            raw_feature, raw_outcome, alpha=0.05,
+            color=self.data_color)
         handles.append(scatter_plot)
         labels.append('Raw data')
         # locs = axs[0].get_xticks()
