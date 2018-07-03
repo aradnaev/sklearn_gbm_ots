@@ -244,6 +244,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         Todo: split this methods into 2-3 smaller ones
         """
         legends = []
+        legend_labels = []
         deltas = []
         deltas_unc = []
         labels = []
@@ -294,7 +295,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             plot_x, plot_deltas,
             width=width, align='center')
         legends.append(pdp_bars)
-        # ax.legend(['partial dependence delta'])
+        legend_labels.append('Partial dependences with uncertainties')
         ax.errorbar(
             plot_x, plot_deltas,
             yerr=np.array(deltas_unc)[idxs],
@@ -313,7 +314,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                 color='grey',
                 fmt='o')
             legends.append(means_bars)
-            # ax.legend(['mean with uncertainty'])
+            legend_labels.append('Raw averages with uncertainties')
+            # ax.legend(['Raw averages with uncertainties'])
         ax.grid(alpha=0.3)
 
         if overlay_box_plots:
@@ -325,8 +327,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
         counts_bars = self.overlay_counts_histogram(
             ax, plot_x, counts, xlim, ylim)
-        # ax.legend(label='counts')
         legends.append(counts_bars)
+        legend_labels.append('Counts')
         plt.xticks(plot_x, np.array(labels)[idxs], rotation='vertical')
         plt.xlabel('{}'.format(feature_label))
         plt.ylabel(self.outcome_label)
@@ -338,10 +340,15 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         xlim = ax_limits_per_feature.get('xlim')
         if xlim is not None:
             ax.set_ylim(tuple(xlim))
+        ax.legend(
+            handles=legends,
+            labels=legend_labels,
+            bbox_to_anchor=(1, 0.5))
         # plt.legend(
-        #     handles=legends,
+        #     handles=legends[:1],
         #     loc='center left',
         #     bbox_to_anchor=(1, 0.5))
+
         if self.show_plots:
             plt.show()
         # plt.show()
@@ -381,6 +388,12 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
     def add_overlay_data(
             self, ax, raw_x, n_raw_datapoints, outcome_mean,
             overlay_box_plots=False):
+        """Plots in given axis object the following:
+            1) outcome means of buckets with mean uncertanties
+            2) line connecting the means
+            3) counts in each bucket
+            4) optionally box plots of the buckets distributions
+            """
         xlim = ax.get_xlim()
         ylim = ax.get_ylim()
         locs = np.linspace(xlim[0], xlim[1], n_raw_datapoints)
@@ -389,6 +402,8 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         means_x = []
         counts = []
         raw_data = []
+        handles = []
+        labels = []
         # means
         left = locs[0] - (locs[1] - locs[0]) / 2.
         for i in range(len(locs) - 1):
@@ -411,13 +426,20 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         plot_mean_x = np.array(means_x)
         plot_mean_y = np.array(means)
         ax.plot(plot_mean_x, plot_mean_y, alpha=0.1)
-        ax.errorbar(
+        error_bars_plot = ax.errorbar(
             plot_mean_x, plot_mean_y, yerr=np.array(means_unc), fmt='o')
+        handles.append(error_bars_plot)
+        labels.append('Raw averages with mean uncertainties')
         # box plots
         if overlay_box_plots:
-            self.box_plots_raw_data(raw_data, means_x)
+            box_plots = self.box_plots_raw_data(raw_data, means_x)
+            handles.append(box_plots)
+            labels.append('Box plots for the buckets')
+        counts_plot = self.overlay_counts_histogram(ax, means_x, counts, xlim, ylim)
+        handles.append(counts_plot)
+        labels.append('Counts')
 
-        self.overlay_counts_histogram(ax, means_x, counts, xlim, ylim)
+        return handles, labels
 
     def overlay_counts_histogram(self, ax, means_x, counts, xlim, ylim):
         # counts
@@ -481,12 +503,58 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             grid=axes[0],
             percentiles=percentiles)
 
-        plt.fill_between(
+        pdp_uncertainty_plot = plt.fill_between(
             axes[0], pdps[0] - stds, pdps[0] + stds, alpha=0.2)
-        plt.plot(
+        pdp_plot, = plt.plot(
             axes[0], pdps[0], lw=5)
 
-        return fig, ax
+        return fig, ax, pdp_plot, pdp_uncertainty_plot
+
+    def plot_numeric_partial_dependencies(
+            self, gbm, feature_label, percentiles,
+            ax_limits_per_feature,
+            n_raw_datapoints, **fig_params):
+        outcome_mean = np.mean(self.train_y)
+        handles = []
+        labels = []
+        feature_idx = self.feature_index_by_label[feature_label]
+        fig, ax, pdp_plot, pdp_uncertainty_plot = \
+            self.plot_partial_dependence_with_unc(
+                gbm, feature_idx, percentiles=percentiles, **fig_params)
+        handles = handles + [pdp_plot, pdp_uncertainty_plot]
+        labels = labels + ['Partial dependence', '67% confidence interval']
+        ylim = ax_limits_per_feature.get(
+            'ylim', self.add_plot_margins(ax.get_ylim()))
+        xlim = ax_limits_per_feature.get(
+            'xlim', self.add_plot_margins(ax.get_xlim()))
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+        ax.grid(alpha=0.3)
+
+        raw_feature = self.train_X[[self.feature_labels[feature_idx]]]
+        raw_outcome = self.train_y - outcome_mean
+        overlay_handles, overlay_labels = self.add_overlay_data(
+            ax,
+            raw_feature.iloc[:, 0],
+            n_raw_datapoints,
+            outcome_mean)
+        handles = handles + overlay_handles
+        labels = labels + overlay_labels
+        scatter_plot = ax.scatter(raw_feature, raw_outcome, alpha=0.05)
+        handles.append(scatter_plot)
+        labels.append('Raw data')
+        # locs = axs[0].get_xticks()
+        ax.set_xlim(xlim)
+        ax.set_ylim(ylim)
+
+        ax.set_title('Partial dependence on {} ({} trees)'.format(
+            feature_label, gbm.n_estimators))
+        ax.legend(
+            handles=handles,
+            labels=labels,
+            bbox_to_anchor=(1, 0.5))
+        self.save_fig(fig, 'partial_dependence_{}.png'.format(
+            feature_label))
 
     def partial_dependencies_plots(
             self,
@@ -505,9 +573,9 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
         feature_labels2, fis2 = mu.dict_to_lists(
             self.consolidate_feature_importance(gbm.feature_importances_),
-            target_type = np.array)
+            target_type=np.array)
         features_to_plot = np.argsort(-fis2)
-        outcome_mean = np.mean(self.train_y)
+
         if ax_limits is None:
             ax_limits = {}
         self.models_sample(gbm_params)
@@ -521,44 +589,23 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                     overlay_box_plots=overlay_box_plots,
                     **fig_params)
             else:
-                feature_idx = self.feature_index_by_label[feature_label]
-                fig, ax = self.plot_partial_dependence_with_unc(
-                    gbm, feature_idx, percentiles=percentiles)
-
-                ylim = ax_limits_per_feature.get(
-                    'ylim', self.add_plot_margins(ax.get_ylim()))
-                xlim = ax_limits_per_feature.get(
-                    'xlim', self.add_plot_margins(ax.get_xlim()))
-                ax.set_xlim(xlim)
-                ax.set_ylim(ylim)
-                ax.grid(alpha=0.3)
-
-                raw_feature = self.train_X[[self.feature_labels[feature_idx]]]
-                raw_outcome = self.train_y - outcome_mean
-                self.add_overlay_data(
-                    ax,
-                    raw_feature.iloc[:, 0],
-                    n_raw_datapoints,
-                    outcome_mean)
-                ax.scatter(raw_feature, raw_outcome, alpha=0.05)
-                # locs = axs[0].get_xticks()
-                ax.set_xlim(xlim)
-                ax.set_ylim(ylim)
-
-                ax.set_title('Partial dependence on {} ({} trees)'.format(
-                    feature_label, gbm.n_estimators))
-                self.save_fig(fig, 'partial_dependence_{}.png'.format(
-                    feature_label))
-
-        first_feature = feature_labels2[features_to_plot[0]]
-        second_feature = feature_labels2[features_to_plot[1]]
-        f1 = self.feature_index_by_label.get(first_feature)
-        f2 = self.feature_index_by_label.get(second_feature)
-        if f1 is not None and f2 is not None:
-            fig, axs = skl_e_pd.plot_partial_dependence(
-                gbm, self.train_X, [[f1, f2]],
-                feature_names=self.train_X.columns,
-                **fig_params)
-            self.save_fig(fig, 'partial_dependence_{}_{}.png'.format(
-                first_feature,
-                second_feature))
+                self.plot_numeric_partial_dependencies(
+                    gbm, feature_label, percentiles,
+                    ax_limits_per_feature,
+                    n_raw_datapoints, **fig_params)
+        try:
+            first_feature = feature_labels2[features_to_plot[0]]
+            second_feature = feature_labels2[features_to_plot[1]]
+            f1 = self.feature_index_by_label.get(first_feature)
+            f2 = self.feature_index_by_label.get(second_feature)
+            if f1 is not None and f2 is not None:
+                fig, axs = skl_e_pd.plot_partial_dependence(
+                    gbm, self.train_X, [[f1, f2]],
+                    feature_names=self.train_X.columns,
+                    **fig_params)
+                self.save_fig(fig, 'partial_dependence_{}_{}.png'.format(
+                    first_feature,
+                    second_feature))
+        except Exception as e:
+            logging.error(
+                'cannot plot 2D partial dependence due to: {}'.format(e))
