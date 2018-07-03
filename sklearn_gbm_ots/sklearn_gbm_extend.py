@@ -25,7 +25,9 @@ class ToolsGBM():
             train_weights,
             outcome_label='outcome',
             destination_dir=None,
-            show_plots=True):
+            show_plots=True,
+            random_state=None):
+        self.random_state = random_state
         self.show_plots = show_plots
         if not self.show_plots:
             plt.ioff()
@@ -71,11 +73,20 @@ class ToolsGBM():
 for signal-to-noise calculations is {}. Otherwise renormalize weights\'s \
 sum to the effective sample size'.format(np.sum(self.train_weights)))
 
+    def update_random_state(self, params):
+        params2 = params.copy()
+        if 'random_state' not in params2:
+            params2['random_state'] = self.random_state
+        return params
+
     def cv_estimate(
             self,
             params,
             n_splits=3):
-        cv = skl_ms.KFold(n_splits=n_splits)
+        params2 = self.update_random_state(params)
+        cv = skl_ms.KFold(
+            n_splits=n_splits,
+            random_state=self.random_state)
         val_scores = np.zeros(
             (params['n_estimators'], n_splits),
             dtype=np.float64)
@@ -88,7 +99,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             self.train_X_cv_subsets.append(train_X_cv_subset)
             self.train_y_cv_subsets.append(train_y_cv_subset)
             self.train_weights_cv_subsets.append(train_weights_cv_subset)
-            cv_model = skl_e.GradientBoostingRegressor(**params)
+            cv_model = skl_e.GradientBoostingRegressor(**params2)
             cv_model.fit(
                 train_X_cv_subset, train_y_cv_subset,
                 sample_weight=train_weights_cv_subset)
@@ -479,8 +490,9 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
 
     def models_sample(
             self, params):
+        params2 = self.update_random_state(params)
         for i, train_X_cv_subset in enumerate(self.train_X_cv_subsets):
-            cv_model = skl_e.GradientBoostingRegressor(**params)
+            cv_model = skl_e.GradientBoostingRegressor(**params2)
             # cv_model.fit(
             #     train_X_cv_subset,
             #     self.train_y_cv_subsets[i])

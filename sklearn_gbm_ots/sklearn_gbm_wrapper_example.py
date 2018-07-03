@@ -53,7 +53,8 @@ def run_gbm():
     housing_gbm = gbm_ots.GBMwrapper(
         df,
         outcome,
-        show_plots=False)
+        show_plots=False,
+        random_state=2018)
 
     gbm_params = {
         'n_estimators': 1000,
