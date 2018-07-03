@@ -47,12 +47,23 @@ def run_gbm():
     Returns:
         fitted sklearn_gbm_wrapper.GBMwrapper object"""
     outcome = 'house price, 100k'
+
     df = prepare_california_housing_dataframe(outcome)
-    # df = df[:100]
+
     housing_gbm = gbm_ots.GBMwrapper(
         df,
         outcome,
-        show_plots=False)
+        show_plots=False,
+        random_state=2018)
+
+    # gbm_params = {
+    #     'n_estimators': 1000,
+    #     'max_depth': 3,
+    #     'max_features': 5,
+    #     'min_samples_split': 10,
+    #     'min_samples_leaf': 5,
+    #     'learning_rate': 0.3,
+    #     'loss': 'ls'}
 
     gbm_params = {
         'n_estimators': 1000,
@@ -60,10 +71,10 @@ def run_gbm():
         'max_features': 5,
         'min_samples_split': 10,
         'min_samples_leaf': 5,
-        'learning_rate': 0.3,
+        'learning_rate': 0.1,
         'loss': 'ls'}
-
     housing_gbm.build_model(params=gbm_params)
+
     return housing_gbm
 
 
