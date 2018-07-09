@@ -4,6 +4,9 @@ sklearn
 data created: 2018-06-14
 
 author: Alex Radnaev
+
+# todo: fix absolute scale plotting
+
 """
 import sklearn.model_selection as skl_ms
 import sklearn.ensemble as skl_e
@@ -26,7 +29,9 @@ class ToolsGBM():
             outcome_label='outcome',
             destination_dir=None,
             show_plots=True,
-            random_state=None):
+            random_state=None,
+            file_prefix=''):
+        self.file_prefix = file_prefix
         self.random_state = random_state
         self.show_plots = show_plots
         if not self.show_plots:
@@ -192,7 +197,7 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
     def save_fig(self, fig, local_filename):
         if self.destination_dir is not None:
             fig.savefig(
-                self.destination_dir + local_filename,
+                self.destination_dir + self.file_prefix + local_filename,
                 bbox_inches='tight',
                 dpi=150)
 
@@ -255,6 +260,12 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
         for k in bp.keys():
             [b.set_alpha(0.05) for b in bp[k]]
 
+    def outcome_ylabel(self, absolute_yticks):
+        if absolute_yticks:
+            return self.outcome_label
+        else:
+            return self.outcome_label + ' deviation from average'
+
     def partial_dependency_catagorical_plot(
             self,
             gbm,
@@ -262,9 +273,14 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
             ax_limits_per_feature=None,
             overlay_box_plots=False,
             add_means=True,
+            absolute_yscale=False,
+            absolute_yticks=True,
             **fig_params):
         """Plots partial dependency for a categorical variable.
 
+        arguments:
+            absolute_yscale - absolute_scale (starts at zero) on y axis
+            absolute_yticks - flag to subtract mean from y axis pabels
         Todo: split this methods into 2-3 smaller ones
         """
         legends = []
@@ -296,14 +312,22 @@ sum to the effective sample size'.format(np.sum(self.train_weights)))
                     feature_index))
             else:
                 try:
-                    deltas.append(y[0][np.where(x[0] == 1)[0][0]]
-                                  - y[0][np.where(x[0] == 0)[0][0]])
+                    delta = y[0][np.where(x[0] == 1)[0][0]]\
+                            - y[0][np.where(x[0] == 0)[0][0]]
+                    # if absolute_yscale or absolute_yticks:
+                    #     logging.debug('original delta: {}'.format(delta))
+                    #     delta += outcome_mean
+                    #     logging.debug('original delta with mean: {}'.format(delta))
+                    deltas.append(delta)
                     labels.append(self.feature_labels[feature_index].replace(
                         feature_label + '_', ''))
                     deltas_unc.append(np.sqrt(np.sum(stds**2)))
 
-                    train_X_idx = self.train_X[self.feature_labels[feature_index]] == 1
-                    raw_data_subset = self.train_y[train_X_idx] - outcome_mean
+                    train_X_idx = self.train_X[
+                        self.feature_labels[feature_index]] == 1
+                    raw_data_subset = self.train_y[train_X_idx]
+                    # if not absolute_yscale and not absolute_yticks:
+                    #     raw_data_subset -= outcome_mean
                     raw_data_weights = self.train_weights[train_X_idx]
                     raw_data.append(raw_data_subset)
                     means.append(
@@ -323,25 +347,38 @@ feature index "{}" due to "{}"'.format(feature_index, e))
         plot_deltas = np.array(deltas)[idxs]
         fig = plt.figure(**fig_params)
         ax = fig.add_subplot(1, 1, 1)
+        if absolute_yscale or not absolute_yticks:
+            bar_bottom = 0
+        else:
+            bar_bottom = outcome_mean
+        logging.debug('bar bottom: {}, plot_deltas: {}'.format(
+            bar_bottom, plot_deltas))
         pdp_bars = ax.bar(
             plot_x, plot_deltas,
             width=width, align='center',
-            color=self.pdp_color)
+            color=self.pdp_color,
+            bottom=bar_bottom)
+
         legends.append(pdp_bars)
         legend_labels.append('Partial dependences with uncertainties')
         ax.errorbar(
-            plot_x, plot_deltas,
+            plot_x, plot_deltas + bar_bottom,
             yerr=np.array(deltas_unc)[idxs],
             color='grey',
             fmt='o')
 
         if add_means:
             means_y = np.array(means)[idxs]
+            if not absolute_yticks:
+                means_y -= outcome_mean
+            logging.debug('bar bottom: {}, means_y: {}'.format(
+                bar_bottom, means_y))
             means_bars = ax.bar(
-                plot_x + width, means_y,
+                plot_x + width, means_y - bar_bottom,
                 width=width, align='center',
                 alpha=0.5,
-                color=self.means_color)
+                color=self.means_color,
+                bottom=bar_bottom)
             ax.errorbar(
                 plot_x + width, means_y,
                 yerr=np.array(means_unc)[idxs],
@@ -366,7 +403,7 @@ feature index "{}" due to "{}"'.format(feature_index, e))
             legend_labels.append('Counts')
         plt.xticks(plot_x, np.array(labels)[idxs], rotation='vertical')
         plt.xlabel('{}'.format(feature_label))
-        plt.ylabel(self.outcome_label)
+        plt.ylabel(self.outcome_ylabel(absolute_yticks))
         plt.title('Partial dependence on {} ({} trees)'.format(
             feature_label, gbm.n_estimators))
         ylim = ax_limits_per_feature.get('ylim')
@@ -428,7 +465,9 @@ feature index "{}" due to "{}"'.format(feature_index, e))
 
     def add_overlay_data(
             self, ax, raw_x, n_raw_datapoints, outcome_mean,
-            overlay_box_plots=False):
+            overlay_box_plots=False,
+            absolute_yscale=False,
+            absolute_yticks=True):
         """Plots in given axis object the following:
             1) outcome means of buckets with mean uncertanties
             2) line connecting the means
@@ -454,7 +493,8 @@ feature index "{}" due to "{}"'.format(feature_index, e))
             count = np.sum(idx)
             if count > 0:
                 means_x.append(locs[i])
-                raw_y_bucket = self.train_y[idx] - outcome_mean
+                raw_y_bucket = self.train_y[idx]\
+                    - outcome_mean * (1 - absolute_yticks)
                 raw_data_weights = self.train_weights[idx]
                 raw_data.append(raw_y_bucket)
                 means.append(
@@ -479,7 +519,8 @@ feature index "{}" due to "{}"'.format(feature_index, e))
             box_plots = self.box_plots_raw_data(raw_data, means_x)
             handles.append(box_plots)
             labels.append('Box plots for the buckets')
-        counts_plot = self.overlay_counts_histogram(ax, means_x, counts, xlim, ylim)
+        counts_plot = self.overlay_counts_histogram(
+            ax, means_x, counts, xlim, ylim)
         handles.append(counts_plot)
         labels.append('Counts')
 
@@ -539,7 +580,10 @@ feature index "{}" due to "{}"'.format(feature_index, e))
 
     def plot_partial_dependence_with_unc(
             self, gbm, feature_idx, percentiles=(0.05, 0.95),
+            absolute_yscale=False,
+            absolute_yticks=True,
             **fig_params):
+        outcome_mean = np.mean(self.train_y)
         fig = plt.figure(**fig_params)
         ax = fig.add_subplot(1, 1, 1)
 
@@ -547,32 +591,54 @@ feature index "{}" due to "{}"'.format(feature_index, e))
             gbm, [feature_idx], X=self.train_X,
             percentiles=percentiles)
 
+        if absolute_yscale or absolute_yticks:
+            pdps = pdps + outcome_mean
+
+                # plt.xticks(locs, labels)
         stds = self.partial_dependency_uncertainty(
             [feature_idx],
             grid=axes[0],
             percentiles=percentiles)
 
-        pdp_uncertainty_plot = plt.fill_between(
+        pdp_uncertainty_plot = ax.fill_between(
             axes[0], pdps[0] - stds, pdps[0] + stds,
             alpha=0.2,
             color=self.pdp_color)
-        pdp_plot, = plt.plot(
+        pdp_plot, = ax.plot(
             axes[0], pdps[0], lw=5,
             color=self.pdp_color)
+        if absolute_yscale:
+            c_ylim = ax.get_ylim()
+            ax.set_ylim(0, c_ylim[1])
+        # if offset_mean and not offset_mean_labels:
+        #     # fig.canvas.draw()
+        #     ax.set_yticklabels(ax.get_yticks())
+        #     labels_both = ax.get_yticklabels(which='both')
+
+        #     for l in labels_both:
+        #         l.set_text('{:.2f}'.format(outcome_mean + float(l.get_text())))
+
+        #     ax.set_yticklabels(labels_both)
 
         return fig, ax, pdp_plot, pdp_uncertainty_plot
 
     def plot_numeric_partial_dependencies(
             self, gbm, feature_label, percentiles,
             ax_limits_per_feature,
-            n_raw_datapoints, **fig_params):
+            n_raw_datapoints,
+            absolute_yscale=False,
+            absolute_yticks=True,
+            **fig_params):
         outcome_mean = np.mean(self.train_y)
         handles = []
         labels = []
         feature_idx = self.feature_index_by_label[feature_label]
         fig, ax, pdp_plot, pdp_uncertainty_plot = \
             self.plot_partial_dependence_with_unc(
-                gbm, feature_idx, percentiles=percentiles, **fig_params)
+                gbm, feature_idx, percentiles=percentiles,
+                absolute_yscale=absolute_yscale,
+                absolute_yticks=absolute_yticks,
+                **fig_params)
         handles = handles + [pdp_plot, pdp_uncertainty_plot]
         labels = labels + ['Partial dependence', '67% confidence interval']
         ylim = ax_limits_per_feature.get(
@@ -589,7 +655,9 @@ feature index "{}" due to "{}"'.format(feature_index, e))
             ax,
             raw_feature.iloc[:, 0],
             n_raw_datapoints,
-            outcome_mean)
+            outcome_mean,
+            absolute_yscale=absolute_yscale,
+            absolute_yticks=absolute_yticks)
         handles = handles + overlay_handles
         labels = labels + overlay_labels
         scatter_plot = ax.scatter(
@@ -600,7 +668,7 @@ feature index "{}" due to "{}"'.format(feature_index, e))
         # locs = axs[0].get_xticks()
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
-
+        ax.set_ylabel(self.outcome_ylabel(absolute_yticks))
         ax.set_title('Partial dependence on {} ({} trees)'.format(
             feature_label, gbm.n_estimators))
         ax.legend(
@@ -618,13 +686,16 @@ feature index "{}" due to "{}"'.format(feature_index, e))
             ax_limits=None,
             percentiles=(0.05, 0.95),
             overlay_box_plots=False,
+            absolute_yscale=False,
+            absolute_yticks=True,
             **fig_params):
         """Plots partial dependencies overlayed with other data.
 
         Arguments:
             ax_limits - dictionary of axes limits for each feature.
             Example: {'feature1':{'ylim':[-0.1, 0.1], xlim: [0, 100]}}"""
-
+        if absolute_yscale:
+            raise NameError('absolute_yscale=True is not implemented yet')
         feature_labels2, fis2 = mu.dict_to_lists(
             self.consolidate_feature_importance(gbm.feature_importances_),
             target_type=np.array)
@@ -641,12 +712,17 @@ feature index "{}" due to "{}"'.format(feature_index, e))
                     gbm, feature_label,
                     ax_limits_per_feature=ax_limits_per_feature,
                     overlay_box_plots=overlay_box_plots,
+                    absolute_yscale=absolute_yscale,
+                    absolute_yticks=absolute_yticks,
                     **fig_params)
             else:
                 self.plot_numeric_partial_dependencies(
                     gbm, feature_label, percentiles,
                     ax_limits_per_feature,
-                    n_raw_datapoints, **fig_params)
+                    n_raw_datapoints,
+                    absolute_yscale=absolute_yscale,
+                    absolute_yticks=absolute_yticks,
+                    **fig_params)
         try:
             first_feature = feature_labels2[features_to_plot[0]]
             second_feature = feature_labels2[features_to_plot[1]]

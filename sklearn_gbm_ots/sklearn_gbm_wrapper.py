@@ -242,7 +242,7 @@ class GBMwrapper():
         self.gbm_fit()
         self.evaluate_performance(self.gbm)
 
-    def plot_output(self, ax_limits=None, **fig_params):
+    def plot_output(self, ax_limits=None, file_prefix='', **fig_params):
         """plots feature importance and partial dependencies plots
         arguments:
             ax_limits - dictionary for customizing plots axes:
@@ -251,11 +251,16 @@ class GBMwrapper():
                     'feature_name2': {'ylim': [0, 0.5]},
                     'feature_name5': {'xlim': [-1, 1]}}
                 if not provided, limits are set based on data
-            **fig_params - keyword parameters to be passed to plots"""
+            **fig_params - keyword parameters to be passed to plots,
+                including standard pyplot.figure and:
+                    absolute_yscale - absolute_scale (starts at zero) on y axis
+                    absolute_yticks - flag to subtract mean from y axis pabels
+                """
 
         if ax_limits is None:
             ax_limits = self.ax_limits_per_feature
         logging.info('plotting feature importances and partial dependences')
+        self.gbm_tools.file_prefix = file_prefix
         self.gbm_tools.feature_importances_plot(
             self.gbm, {'figsize': (11, 11)})
         self.gbm_tools.partial_dependencies_plots(
