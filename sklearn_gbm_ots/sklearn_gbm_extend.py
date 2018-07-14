@@ -544,7 +544,7 @@ feature index "{}" due to "{}"'.format(feature_index, e))
         ax.annotate(
             s=str(max_counts),
             xy=(means_x[c_max], ylim[0] + counts_array[c_max]),
-            color='green')
+            color='black')
         return counts_bars
 
     def models_sample(
