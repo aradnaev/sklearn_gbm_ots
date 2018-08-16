@@ -493,6 +493,8 @@ feature index "{}" due to "{}"'.format(feature_index, e))
             count = np.sum(idx)
             if count > 0:
                 means_x.append(locs[i])
+                # logging.debug(idx)
+                # logging.debug(self.train_y)
                 raw_y_bucket = self.train_y[idx]\
                     - outcome_mean * (1 - absolute_yticks)
                 raw_data_weights = self.train_weights[idx]
@@ -651,20 +653,23 @@ feature index "{}" due to "{}"'.format(feature_index, e))
 
         raw_feature = self.train_X[[self.feature_labels[feature_idx]]]
         raw_outcome = self.train_y - outcome_mean
-        overlay_handles, overlay_labels = self.add_overlay_data(
-            ax,
-            raw_feature.iloc[:, 0],
-            n_raw_datapoints,
-            outcome_mean,
-            absolute_yscale=absolute_yscale,
-            absolute_yticks=absolute_yticks)
-        handles = handles + overlay_handles
-        labels = labels + overlay_labels
-        scatter_plot = ax.scatter(
-            raw_feature, raw_outcome, alpha=0.05,
-            color=self.data_color)
-        handles.append(scatter_plot)
-        labels.append('Raw data')
+        try:
+            overlay_handles, overlay_labels = self.add_overlay_data(
+                ax,
+                raw_feature.iloc[:, 0],
+                n_raw_datapoints,
+                outcome_mean,
+                absolute_yscale=absolute_yscale,
+                absolute_yticks=absolute_yticks)
+            handles = handles + overlay_handles
+            labels = labels + overlay_labels
+            scatter_plot = ax.scatter(
+                raw_feature, raw_outcome, alpha=0.05,
+                color=self.data_color)
+            handles.append(scatter_plot)
+            labels.append('Raw data')
+        except Exception as e:
+            logging.error('cannot overlay data due to {}'.format(e))
         # locs = axs[0].get_xticks()
         ax.set_xlim(xlim)
         ax.set_ylim(ylim)
