@@ -457,7 +457,7 @@ feature index "{}" due to "{}"'.format(feature_index, e))
         return (amin - a_range * self.plot_margin,
                 amax + a_range * self.plot_margin)
 
-    def mean_uncertainty(self, data, weights = None):
+    def mean_uncertainty(self, data, weights=None):
         if weights is None:
             return np.std(data) / np.sqrt(len(data))
         else:

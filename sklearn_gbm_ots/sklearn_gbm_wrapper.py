@@ -14,9 +14,9 @@ import sklearn.model_selection as skl_ms
 import sklearn.ensemble as skl_e
 import sklearn.metrics as skl_metrics
 import numpy as np
-import pandas_extend as pde
+import sklearn_gbm_ots.pandas_tools as pde
 import logging
-import file_system as fs
+import sklearn_gbm_ots.file_tools as fs
 
 
 class GBMwrapper():
@@ -227,7 +227,7 @@ class GBMwrapper():
         logging.info('gbm fitting...')
         self.gbm.fit(
             self.train_X, self.train_y,
-            sample_weight = self.train_weights)
+            sample_weight=self.train_weights)
 
     def update_n_trees(self, new_n_trees):
         """updates number of estimators, then refits and reevalute performance

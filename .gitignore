@@ -3,6 +3,8 @@
 *.xlsx
 *.csv
 
+tests/gbm_output
+gbm_output
 sklearn_gbm_ots/gbm_output
 sklearn_gbm_ots/gbm_output/*
 
