@@ -1,0 +1,45 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: osx-64
+@EXPLICIT
+https://repo.anaconda.com/pkgs/main/osx-64/blas-1.0-mkl.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/ca-certificates-2018.03.07-0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/intel-openmp-2018.0.3-0.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/libcxxabi-4.0.1-hebd6815_0.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/libgfortran-3.0.1-h93005f0_2.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/tk-8.6.7-h35a86e2_3.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/xz-5.2.4-h1de35cc_4.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/zlib-1.2.11-hf3cbc9b_2.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/libcxx-4.0.1-h579ed51_0.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/libpng-1.6.34-he12f830_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/mkl-2018.0.3-1.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/openssl-1.0.2p-h1de35cc_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/freetype-2.9.1-hb4e5f40_0.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/libffi-3.2.1-h475c297_4.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/ncurses-6.1-h0a44026_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/libedit-3.1.20170329-hb402a30_2.tar.bz2
+https://repo.continuum.io/pkgs/main/osx-64/readline-7.0-hc1231fa_4.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/sqlite-3.24.0-ha441bb4_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/python-3.5.5-h0a44026_3.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/certifi-2018.8.13-py35_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/et_xmlfile-1.0.1-py35h40eb147_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/jdcal-1.4-py35_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/kiwisolver-1.0.1-py35h219a9d8_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/numpy-base-1.15.0-py35h8a80b8c_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/pyparsing-2.2.0-py35h31fab04_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/pytz-2018.5-py35_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/six-1.11.0-py35h39a4c60_1.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/tornado-5.1-py35h1de35cc_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/cycler-0.10.0-py35hb89929e_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/openpyxl-2.5.5-py35_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/python-dateutil-2.7.3-py35_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/setuptools-40.0.0-py35_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/wheel-0.31.1-py35_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/pip-10.0.1-py35_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/matplotlib-2.2.3-py35h54f8f79_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/mkl_fft-1.0.4-py35h5d10147_1.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/mkl_random-1.0.1-py35h78cc56f_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/numpy-1.15.0-py35h648b28d_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/pandas-0.23.4-py35h6440ff4_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.1.0-py35hcaad992_0.tar.bz2
+https://repo.anaconda.com/pkgs/main/osx-64/scikit-learn-0.19.1-py35h2b554eb_0.tar.bz2
