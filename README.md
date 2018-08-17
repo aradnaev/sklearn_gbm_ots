@@ -15,13 +15,14 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-You will need Scikit-learn library (http://scikit-learn.org/stable/install.html). Install it using your package manager, for example
+Creating a new environment with dependencies using conda:
 ```
-conda install scikit-learn
+conda env create --file conda_requirements.yml --name gbm2 python=3.5
 ```
-or
+
+Or updating current environment with dependencies using conda:
 ```
-pip install -U scikit-learn
+conda env update -f=conda_requirements.yml 
 ```
 
 ### Installing
