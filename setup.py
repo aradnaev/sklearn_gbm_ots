@@ -6,6 +6,6 @@ setup(name='sklearn_gbm_ots',
       url='http://tbd',
       author='Alex Radnaev',
       author_email='aradnaev@glintinc.com',
-      license='MIT',
+      license='MIT License',
       packages=['sklearn_gbm_ots'],
       zip_safe=False)

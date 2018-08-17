@@ -1,8 +1,11 @@
 # Off-the-shelf Scikit-learn Gradient Boosting Machine
 
 Wraps sklearn Gradient Boosting Regressor to:
+
 1. automate modeling similar to gbm library in R
+
 2. handle categorical features
+
 3. overlay data and descriptive statistics in data visualization of partial dependencies for better inference
 
 
@@ -12,13 +15,14 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-You will need Scikit-learn library. Install it using your package manager, for example
+Creating a new environment with dependencies using conda:
 ```
-conda install sklearn
+conda env create --file conda_requirements.yml --name gbm2 python=3.5
 ```
 
+Or updating current environment with dependencies using conda:
 ```
-pip install sklearn
+conda env update -f=conda_requirements.yml 
 ```
 
 ### Installing
@@ -38,7 +42,11 @@ you should observe log of building a model using cross-validation for tuning num
 
 ## Running the tests
 
-TBD
+Basic test only is developed so far.
+
+```
+python tests/test_sklearn_gbm_wrapper_example.py
+```
 
 ### Break down into end to end tests
 

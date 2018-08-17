@@ -14,9 +14,9 @@ import sklearn.model_selection as skl_ms
 import sklearn.ensemble as skl_e
 import sklearn.metrics as skl_metrics
 import numpy as np
-import pandas_extend as pde
+import sklearn_gbm_ots.pandas_tools as pde
 import logging
-import file_system as fs
+import sklearn_gbm_ots.file_tools as fs
 
 
 class GBMwrapper():
@@ -30,7 +30,8 @@ class GBMwrapper():
             tail_threshold=10,
             destination_dir='./gbm_output/',
             ax_limits_per_feature=None,
-            show_plots=True):
+            show_plots=True,
+            random_state=None):
 
         """Creates gbm object for future modeling.
 
@@ -51,6 +52,7 @@ class GBMwrapper():
                     'feature_name5': {'xlim': [-1, 1]},
                 }
         """
+        self.random_state = random_state
         self.show_plots = show_plots
         self.destination_dir = destination_dir
         fs.prepare_folder_for(self.destination_dir + 'temp.txt')
@@ -153,7 +155,8 @@ class GBMwrapper():
         (self.train_X, self.test_X, self.train_y, self.test_y,
          self.train_weights, self.test_weights, self.df_train,
          self.df_test) = skl_ms.train_test_split(
-            self.X, self.y, self.weights, self.df_dataset)
+            self.X, self.y, self.weights, self.df_dataset,
+            random_state=self.random_state)
 
         self.gbm_tools = sklearn_gbm_extend.ToolsGBM(
             self.categorical_features,
@@ -162,7 +165,13 @@ class GBMwrapper():
             self.train_weights,
             outcome_label=self.outcome,
             destination_dir=self.destination_dir,
-            show_plots=self.show_plots)
+            show_plots=self.show_plots,
+            random_state=self.random_state)
+
+    def update_params(self, params):
+        self.params = params
+        if 'random_state' not in self.params:
+            self.params['random_state'] = self.random_state
 
     def build_model(self, params=None, cv_n_splits=5):
         """Builds model and stores it in the object:
@@ -175,7 +184,7 @@ class GBMwrapper():
             cv_n_splits - number of splits for cross-validation (default 5)"""
         if params is None:
             params = self.default_params
-        self.params = params
+        self.update_params(params)
         logging.info('Cross-validation parameter optimization started.')
         val_scores, std_val_scores = self.gbm_tools.cv_estimate(
             params, n_splits=cv_n_splits)
@@ -197,14 +206,14 @@ class GBMwrapper():
         logging.info('selected n_trees: {}'.format(selected_n_trees))
 
         logging.info('plotting all trees training curves')
-        self.gbm = skl_e.GradientBoostingRegressor(**params)
+        self.gbm = skl_e.GradientBoostingRegressor(**self.params)
         self.gbm_fit()
 
         self.gbm_tools.plot_gbm_training(
             self.gbm, self.test_X, self.test_y, cv_scores=val_scores,
-            cv_std_scores = std_val_scores,
-            fig_params = {'figsize': (11, 11)},
-            vertical_lines = vertical_lines)
+            cv_std_scores=std_val_scores,
+            fig_params={'figsize': (11, 11)},
+            vertical_lines=vertical_lines)
 
         self.update_n_trees(selected_n_trees)
 
@@ -218,7 +227,7 @@ class GBMwrapper():
         logging.info('gbm fitting...')
         self.gbm.fit(
             self.train_X, self.train_y,
-            sample_weight = self.train_weights)
+            sample_weight=self.train_weights)
 
     def update_n_trees(self, new_n_trees):
         """updates number of estimators, then refits and reevalute performance
@@ -233,7 +242,7 @@ class GBMwrapper():
         self.gbm_fit()
         self.evaluate_performance(self.gbm)
 
-    def plot_output(self, ax_limits=None, **fig_params):
+    def plot_output(self, ax_limits=None, file_prefix='', **fig_params):
         """plots feature importance and partial dependencies plots
         arguments:
             ax_limits - dictionary for customizing plots axes:
@@ -242,11 +251,16 @@ class GBMwrapper():
                     'feature_name2': {'ylim': [0, 0.5]},
                     'feature_name5': {'xlim': [-1, 1]}}
                 if not provided, limits are set based on data
-            **fig_params - keyword parameters to be passed to plots"""
+            **fig_params - keyword parameters to be passed to plots,
+                including standard pyplot.figure and:
+                    absolute_yscale - absolute_scale (starts at zero) on y axis
+                    absolute_yticks - flag to subtract mean from y axis pabels
+                """
 
         if ax_limits is None:
             ax_limits = self.ax_limits_per_feature
         logging.info('plotting feature importances and partial dependences')
+        self.gbm_tools.file_prefix = file_prefix
         self.gbm_tools.feature_importances_plot(
             self.gbm, {'figsize': (11, 11)})
         self.gbm_tools.partial_dependencies_plots(
