@@ -12,7 +12,7 @@ import sklearn.model_selection as skl_ms
 import sklearn.ensemble as skl_e
 import numpy as np
 import matplotlib.pyplot as plt
-import misc_utils as mu
+import sklearn_gbm_ots.misc_tools as mu
 import sklearn.ensemble.partial_dependence as skl_e_pd
 import logging
 import pandas as pd
