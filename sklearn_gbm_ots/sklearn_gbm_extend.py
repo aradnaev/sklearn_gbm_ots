@@ -12,7 +12,7 @@ import sklearn.model_selection as skl_ms
 import sklearn.ensemble as skl_e
 import numpy as np
 import matplotlib.pyplot as plt
-import misc_utils as mu
+import sklearn_gbm_ots.misc_tools as mu
 import sklearn.ensemble.partial_dependence as skl_e_pd
 import logging
 import pandas as pd
@@ -457,7 +457,7 @@ feature index "{}" due to "{}"'.format(feature_index, e))
         return (amin - a_range * self.plot_margin,
                 amax + a_range * self.plot_margin)
 
-    def mean_uncertainty(self, data, weights = None):
+    def mean_uncertainty(self, data, weights=None):
         if weights is None:
             return np.std(data) / np.sqrt(len(data))
         else:
